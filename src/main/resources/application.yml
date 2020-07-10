@@ -1,0 +1,15 @@
+amazonProperties:
+  endpointUrl: https://s3.us-east-2.amazonaws.com
+  accessKey: AKIARE6XKOL25NYIR4OU
+  secretKey: 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
+  bucketName: sustech/Documents
+  docloc: https://sustech.s3.amazonaws.com/Documents
+
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
+server:
+  port: 8080
