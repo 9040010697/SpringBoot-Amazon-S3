@@ -3,7 +3,7 @@ amazonProperties:
   accessKey: <accesskey>
   secretKey: <secret>
   bucketName: sustech/Documents
-  docloc: https://sustech.s3.amazonaws.com/Documents
+  docloc: https://<bucket>/Documents
 
 spring:
   servlet:
