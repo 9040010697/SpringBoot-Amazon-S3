@@ -2,6 +2,8 @@ import pandas as pd
 import boto3
 from io import BytesIO
 import gc
+import tempfile
+import os
 import math
 from datetime import datetime, timedelta
 
@@ -100,6 +102,36 @@ def upload_dataframe_in_chunks(dataframe, bucket_name, s3_key,  base_file_name, 
         # Upload the chunk to S3
         s3_client.put_object(Bucket=bucket_name, Key=s3_file_key, Body=parquet_buffer)
         print(f"Chunk {i} uploaded to s3://{bucket_name}/{s3_file_key}")
+
+
+def upload_dataframe_in_chunks_with_temp_file(dataframe, bucket_name, s3_key,  base_file_name, aws_access_key_id, aws_secret_access_key, chunk_size=3):
+    # Create a boto3 client
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key
+    )
+    delete_existing_s3_directory(s3_client, bucket_name, s3_key)
+    # Calculate the number of chunks needed
+    number_of_chunks = math.ceil(len(dataframe) / chunk_size)
+    for i in range(number_of_chunks):
+        start_index = i * chunk_size
+        end_index = (i + 1) * chunk_size
+        chunk_df = dataframe.iloc[start_index:end_index]
+
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            chunk_df.to_parquet(temp_file.name, index=False)
+            temp_file_path = temp_file.name
+
+        # Define a unique key for each chunk
+        s3_file_key = f"{s3_key}{base_file_name}_part_{i}.parquet"
+        buffer_size_kb = os.path.getsize(temp_file_path) / 1024
+
+        # Upload the chunk to S3
+        s3_client.upload_file(temp_file_path, bucket_name, s3_file_key)
+    
+        print(f"Chunk {i} uploaded to s3://{bucket_name}/{s3_file_key} with records: {len(chunk_df)} , size : {round(buffer_size_kb, 2)} KB")
+        os.remove(temp_file_path)
 
 
 def getDate(dateformat):
